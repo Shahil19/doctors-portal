@@ -1,37 +1,41 @@
 import React from 'react';
-import { useAuthState, useSignInWithEmailAndPassword, useSignInWithGoogle } from 'react-firebase-hooks/auth';
+import { useAuthState, useCreateUserWithEmailAndPassword, useSignInWithGoogle, useUpdateProfile } from 'react-firebase-hooks/auth';
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from 'react-router-dom';
 import auth from '../../firebase.init'
 import Loading from '../Shared/Loading';
 
-const Login = () => {
-
+const Signup = () => {
     // Get User
     const [user, loading, error] = useAuthState(auth);
 
-    // Email and Password Login
+    // Email and Password signup
     const [
-        signInWithEmailAndPassword,
+        createUserWithEmailAndPassword,
         eUser,
         eLoading,
         eError,
-    ] = useSignInWithEmailAndPassword(auth);
+    ] = useCreateUserWithEmailAndPassword(auth);
 
-    // Google Sign In
-    const [signInWithGoogle, gUser, gLoading, gError] = useSignInWithGoogle(auth);
+    // update profile
+    const [updateProfile, updating, updateError] = useUpdateProfile(auth);
 
     const navigate = useNavigate()
     // sign in with email and password
-    const onSubmit = data => {
+    const onSubmit = async data => {
         const email = data.email
         const password = data.password
-        signInWithEmailAndPassword(email, password)
+        const displayName = data.name
+
+        await createUserWithEmailAndPassword(email, password)
+        await updateProfile({ displayName });
         reset()
-        if (user) {
-            navigate('/appointment')
-        }
+        navigate('/appointment')
     };
+
+
+    // Google Sign In
+    const [signInWithGoogle, gUser, gLoading, gError] = useSignInWithGoogle(auth);
 
     // sign in with google
     const handleGoogleSignin = () => {
@@ -46,13 +50,33 @@ const Login = () => {
     if (eLoading || gLoading) {
         return <Loading></Loading>
     }
+
+
     return (
         <div className='flex justify-center items-center h-screen'>
             <div className="card w-96 bg-base-100 shadow-xl">
                 <div className="card-body">
-                    <h2 className="text-center font-bold text-2xl">Login</h2>
+                    <h2 className="text-center font-bold text-2xl">Sign Up</h2>
 
                     <form onSubmit={handleSubmit(onSubmit)}>
+
+                        <div className="form-control w-full max-w-xs">
+                            <input
+                                {...register("name", {
+                                    required: {
+                                        value: true,
+                                        message: "Name address is required"
+                                    }
+                                })}
+                                type="text"
+                                placeholder="Your name"
+                                className="input input-bordered w-full max-w-xs"
+                            />
+                            <label className="label">
+                                {errors.name?.type === 'required' && <span className="label-text-alt text-red-500">{errors.name.message}</span>}
+                                {/* {errors.name?.type === 'required' && <span className="label-text-alt">{errors.email.message}</span>} */}
+                            </label>
+                        </div>
 
                         <div className="form-control w-full max-w-xs">
                             <input
@@ -84,7 +108,6 @@ const Login = () => {
                                         value: 6,
                                         message: 'Min 6 characters or longer'
                                     }
-
                                 })}
                                 type="password"
                                 placeholder="Password"
@@ -96,10 +119,10 @@ const Login = () => {
                                 {eError && <span className="label-text-alt text-red-500">{eError.message}</span>}
                             </label>
                         </div>
-                        <input type="submit" className='btn w-full max-w-xs' value={"Login"} />
+                        <input type="submit" className='btn w-full max-w-xs' value={"Sign Up"} />
                     </form>
 
-                    <p><small>New to Doctors Portal? <Link to='/signup' className='text-primary text-sm'>Create An Account</Link> </small></p>
+                    <p><small>Already have an account? <Link to='/login' className='text-secondary text-sm'>Log In</Link> </small></p>
 
                     <div className="divider">OR</div>
                     <button
@@ -111,4 +134,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default Signup;
