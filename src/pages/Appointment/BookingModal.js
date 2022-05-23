@@ -1,15 +1,65 @@
 import { format } from 'date-fns';
 import React from 'react';
+import auth from '../../firebase.init'
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { toast } from 'react-toastify';
 
 const BookingModal = ({ treatment, date, setTreatment }) => {
+    // get user
+    const [user] = useAuthState(auth);
+
     const { name, _id, slots } = treatment;
+    const formattedDate = format(date, 'PP')
+
     const handleBooking = event => {
         event.preventDefault()
         const slot = event.target.slot.value
-        console.log(slot);
-        console.log({ name, _id });
 
-        setTreatment(null)
+        const booking = {
+            treatment: name,
+            treatmentId: _id,
+            slot,
+            date: formattedDate,
+            patientName: user.displayName,
+            patientEmail: user.email,
+            phone: event.target.phone.value
+        }
+
+        // send booking info to backend
+        fetch('http://localhost:5000/booking', {
+            method: "POST",
+            headers: {
+                "content-type": "application/json"
+            },
+            body: JSON.stringify(booking)
+        })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                if (data.acknowledged) {
+                    toast(`🦄 ${name} booked!!`, {
+                        position: "top-right",
+                        autoClose: 5000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: undefined,
+                    });
+                } else {
+                    toast.error(data.result, {
+                        position: "top-right",
+                        autoClose: 5000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: undefined,
+                    });
+                }
+                // close the modal when submit
+                setTreatment(null)
+            })
     }
 
     return (
@@ -24,13 +74,14 @@ const BookingModal = ({ treatment, date, setTreatment }) => {
                         <input disabled value={format(date, 'PP')} type="text" placeholder="Type here" className="input input-bordered input-accent w-full max-w-xs" />
                         <select name='slot' className="select select-info w-full max-w-xs">
                             {
-                                slots?.map(slot => <option
-                                    key={slot}
-                                    value={slot}>{slot}</option>)
+                                slots?.map((slot, index) => <option
+                                    key={index}
+                                    value={slot}
+                                >{slot}</option>)
                             }
                         </select>
-                        <input type="text" placeholder="Name" name='name' className="input input-bordered input-accent w-full max-w-xs" />
-                        <input type="email" placeholder="Email" name='email' className="input input-bordered input-accent w-full max-w-xs" />
+                        <input type="text" value={user?.displayName} disabled name='name' className="input input-bordered input-accent w-full max-w-xs" />
+                        <input type="email" value={user?.email} disabled name='email' className="input input-bordered input-accent w-full max-w-xs" />
                         <input type="text" placeholder="Phone Number" name='phone' className="input input-bordered input-accent w-full max-w-xs" />
                         <input type="submit" value="Submit" className="input w-full max-w-xs text-white bg-gradient-to-r from-primary to-secondary" />
                     </form>

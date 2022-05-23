@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuthState, useSignInWithEmailAndPassword, useSignInWithGoogle } from 'react-firebase-hooks/auth';
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import auth from '../../firebase.init'
 import Loading from '../Shared/Loading';
 
@@ -21,22 +21,27 @@ const Login = () => {
     // Google Sign In
     const [signInWithGoogle, gUser, gLoading, gError] = useSignInWithGoogle(auth);
 
+
     const navigate = useNavigate()
+    const location = useLocation();
+    const from = location.state?.from?.pathname || "/";
+
+
     // sign in with email and password
     const onSubmit = data => {
         const email = data.email
         const password = data.password
         signInWithEmailAndPassword(email, password)
-        reset()
-        if (user) {
-            navigate('/appointment')
-        }
+        // reset()
     };
 
     // sign in with google
     const handleGoogleSignin = () => {
         signInWithGoogle()
-        navigate('/appointment')
+    }
+
+    if (user) {
+        navigate(from, { replace: true });
     }
 
     // ---- form
@@ -46,6 +51,8 @@ const Login = () => {
     if (eLoading || gLoading) {
         return <Loading></Loading>
     }
+
+
     return (
         <div className='flex justify-center items-center h-screen'>
             <div className="card w-96 bg-base-100 shadow-xl">
