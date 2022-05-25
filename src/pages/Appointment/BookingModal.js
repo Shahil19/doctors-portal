@@ -4,7 +4,7 @@ import auth from '../../firebase.init'
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { toast } from 'react-toastify';
 
-const BookingModal = ({ treatment, date, setTreatment }) => {
+const BookingModal = ({ treatment, date, setTreatment, refetch }) => {
     // get user
     const [user] = useAuthState(auth);
 
@@ -57,6 +57,8 @@ const BookingModal = ({ treatment, date, setTreatment }) => {
                         progress: undefined,
                     });
                 }
+                // refetch to auto fetch when order booked
+                refetch()
                 // close the modal when submit
                 setTreatment(null)
             })
